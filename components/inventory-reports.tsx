@@ -79,47 +79,51 @@ export function InventoryReports({ items }: InventoryReportsProps) {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Breakdown</CardTitle>
-          <CardDescription>Items and value by category</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {categoryBreakdown.map(({ category, count, value }) => (
-              <div key={category} className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">{category}</p>
-                  <p className="text-sm text-muted-foreground">{count} items</p>
-                </div>
-                <div className="font-medium">{formatCurrency(value)}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {lowStockItems.length > 0 && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Low Stock Alert</CardTitle>
-            <CardDescription>Items that need to be restocked</CardDescription>
+            <CardTitle>Category Breakdown</CardTitle>
+            <CardDescription>Items and value by category</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {lowStockItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between">
+              {categoryBreakdown.map(({ category, count, value }) => (
+                <div key={category} className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">{item.category}</p>
+                    <p className="text-sm font-medium leading-none">{category}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {count} {count === 1 ? "item" : "items"}
+                    </p>
                   </div>
-                  <div className="font-medium text-destructive">{item.quantity} left</div>
+                  <div className="font-medium">{formatCurrency(value)}</div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
-      )}
+
+        {lowStockItems.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Low Stock Alert</CardTitle>
+              <CardDescription>Items that need to be restocked</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {lowStockItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.category}</p>
+                    </div>
+                    <div className="font-medium text-destructive">{item.quantity} left</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }
