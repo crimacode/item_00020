@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { InventoryTable } from "@/components/inventory-table"
-import { AddItemDialog } from "@/components/add-item-dialog"
+import { ItemDialog } from "@/components/item-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { InventoryReports } from "@/components/inventory-reports"
 import type { Item } from "@/lib/types"
@@ -52,9 +52,10 @@ const initialItems: Item[] = [
 export function Inventory() {
   const { toast } = useToast()
   const [items, setItems] = useState<Item[]>(initialItems)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isItemDialogOpen, setIsItemDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
+  const [currentItem, setCurrentItem] = useState<Item | null>(null)
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add")
   const [searchTerm, setSearchTerm] = useState("")
 
   // Filter items based on search term (name only)
@@ -75,26 +76,54 @@ export function Inventory() {
     })
   }
 
+  const handleEditItem = (updatedItem: Item) => {
+    setItems(
+      items.map((item) =>
+        item.id === updatedItem.id ? { ...updatedItem, lastUpdated: new Date().toISOString() } : item,
+      ),
+    )
+    toast({
+      title: "Item Updated",
+      description: `${updatedItem.name} has been updated.`,
+    })
+  }
+
+  const handleSaveItem = (item: Item) => {
+    if (dialogMode === "add") {
+      handleAddItem(item)
+    } else {
+      handleEditItem(item)
+    }
+  }
+
   const handleDeleteItem = (id: string) => {
     const itemToDelete = items.find((item) => item.id === id)
-    setItemToDelete(itemToDelete || null)
+    setCurrentItem(itemToDelete || null)
     setIsDeleteDialogOpen(true)
   }
 
   const confirmDelete = () => {
-    if (itemToDelete) {
-      setItems(items.filter((item) => item.id !== itemToDelete.id))
+    if (currentItem) {
+      setItems(items.filter((item) => item.id !== currentItem.id))
       toast({
         title: "Item Deleted",
-        description: `${itemToDelete.name} has been removed from inventory.`,
+        description: `${currentItem.name} has been removed from inventory.`,
       })
       setIsDeleteDialogOpen(false)
-      setItemToDelete(null)
+      setCurrentItem(null)
     }
   }
 
   const openAddDialog = () => {
-    setIsAddDialogOpen(true)
+    setDialogMode("add")
+    setCurrentItem(null)
+    setIsItemDialogOpen(true)
+  }
+
+  const openEditDialog = (item: Item) => {
+    setDialogMode("edit")
+    setCurrentItem(item)
+    setIsItemDialogOpen(true)
   }
 
   return (
@@ -114,6 +143,7 @@ export function Inventory() {
         <TabsContent value="inventory" className="space-y-4">
           <InventoryTable
             items={filteredItems}
+            onEdit={openEditDialog}
             onDelete={handleDeleteItem}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -124,18 +154,20 @@ export function Inventory() {
         </TabsContent>
       </Tabs>
 
-      <AddItemDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSave={handleAddItem}
+      <ItemDialog
+        open={isItemDialogOpen}
+        onOpenChange={setIsItemDialogOpen}
+        onSave={handleSaveItem}
         existingItems={items}
+        item={currentItem}
+        mode={dialogMode}
       />
 
       <DeleteConfirmDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={confirmDelete}
-        itemName={itemToDelete?.name || ""}
+        itemName={currentItem?.name || ""}
       />
     </div>
   )

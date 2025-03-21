@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronUp, Search, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Edit, Search, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -9,12 +9,13 @@ import type { Item } from "@/lib/types"
 
 interface InventoryTableProps {
   items: Item[]
+  onEdit: (item: Item) => void
   onDelete: (id: string) => void
   searchTerm: string
   onSearchChange: (value: string) => void
 }
 
-export function InventoryTable({ items, onDelete, searchTerm, onSearchChange }: InventoryTableProps) {
+export function InventoryTable({ items, onEdit, onDelete, searchTerm, onSearchChange }: InventoryTableProps) {
   const [sortField, setSortField] = useState<keyof Item>("name")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
 
@@ -103,14 +104,19 @@ export function InventoryTable({ items, onDelete, searchTerm, onSearchChange }: 
                   <TableCell className="text-right">{item.quantity}</TableCell>
                   <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDelete(item.id)}
-                      aria-label={`Delete ${item.name}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onDelete(item.id)}
+                        aria-label={`Delete ${item.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

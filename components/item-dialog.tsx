@@ -28,14 +28,18 @@ const defaultValues = {
   supplier: "", // Keep this for compatibility but don't show in form
 }
 
-interface AddItemDialogProps {
+interface ItemDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (item: Item) => void
   existingItems: Item[]
+  item?: Item | null
+  mode: "add" | "edit"
 }
 
-export function AddItemDialog({ open, onOpenChange, onSave, existingItems }: AddItemDialogProps) {
+export function ItemDialog({ open, onOpenChange, onSave, existingItems, item, mode }: ItemDialogProps) {
+  const isEditing = mode === "edit"
+
   // Create a dynamic schema that includes all validations
   const createItemSchema = () => {
     return z.object({
@@ -43,9 +47,17 @@ export function AddItemDialog({ open, onOpenChange, onSave, existingItems }: Add
       name: z
         .string()
         .min(2, { message: "Name must be at least 2 characters" })
-        .refine((name) => !existingItems.some((item) => item.name.toLowerCase() === name.toLowerCase()), {
-          message: "An item with this name already exists",
-        }),
+        .refine(
+          (name) => {
+            // If editing, allow the current name
+            if (isEditing && item && name.toLowerCase() === item.name.toLowerCase()) {
+              return true
+            }
+            // Otherwise, check if the name exists
+            return !existingItems.some((i) => i.name.toLowerCase() === name.toLowerCase())
+          },
+          { message: "An item with this name already exists" },
+        ),
       description: z.string().optional(), // Make optional
       category: z.string().min(1, { message: "Please select a category" }),
       quantity: z.coerce
@@ -60,21 +72,39 @@ export function AddItemDialog({ open, onOpenChange, onSave, existingItems }: Add
 
   const form = useForm<z.infer<ReturnType<typeof createItemSchema>>>({
     resolver: zodResolver(createItemSchema()),
-    defaultValues,
+    defaultValues:
+      isEditing && item
+        ? {
+            ...item,
+            // Ensure numeric fields are numbers, not strings
+            quantity: Number(item.quantity),
+            price: Number(item.price),
+          }
+        : defaultValues,
     mode: "onSubmit", // Only validate on submit
   })
 
-  // Reset form when dialog opens/closes
+  // Reset form when dialog opens/closes or when item changes
   useEffect(() => {
     if (open) {
-      form.reset(defaultValues)
+      if (isEditing && item) {
+        form.reset({
+          ...item,
+          // Ensure numeric fields are numbers, not strings
+          quantity: Number(item.quantity),
+          price: Number(item.price),
+        })
+      } else {
+        form.reset(defaultValues)
+      }
     }
-  }, [open, form])
+  }, [open, item, isEditing, form])
 
   const onSubmit = (values: z.infer<ReturnType<typeof createItemSchema>>) => {
-    // Add empty values for description and supplier
+    // Preserve the id if editing
     const itemToSave = {
       ...values,
+      id: isEditing && item ? item.id : values.id,
       description: "",
       supplier: "",
     }
@@ -86,8 +116,12 @@ export function AddItemDialog({ open, onOpenChange, onSave, existingItems }: Add
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Item</DialogTitle>
-          <DialogDescription>Fill in the details to add a new inventory item.</DialogDescription>
+          <DialogTitle>{isEditing ? "Edit Item" : "Add New Item"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Update the details of the inventory item."
+              : "Fill in the details to add a new inventory item."}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -157,7 +191,7 @@ export function AddItemDialog({ open, onOpenChange, onSave, existingItems }: Add
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Add Item</Button>
+              <Button type="submit">{isEditing ? "Update" : "Add"} Item</Button>
             </DialogFooter>
           </form>
         </Form>
