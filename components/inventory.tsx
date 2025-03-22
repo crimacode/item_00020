@@ -136,10 +136,12 @@ export function Inventory() {
       </div>
 
       <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-start">
+          <TabsList className="grid w-full md:w-auto grid-cols-2">
+            <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="inventory" className="space-y-4">
           <InventoryTable
             items={filteredItems}
